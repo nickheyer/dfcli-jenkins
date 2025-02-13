@@ -47,6 +47,11 @@
       <artifactId>commons-lang3-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.26.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.dfcli.build</groupId>
       <artifactId>build-info-api</artifactId>
       <version>${buildinfo.version}</version>
@@ -114,6 +119,10 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>git</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>structs</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>

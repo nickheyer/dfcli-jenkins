@@ -1,9 +1,19 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry title="${%Name}" field="name">
-        <f:textbox/>
-    </f:entry>
-    <f:entry title="${%DFCli CLI execution path}" field="home">
-        <f:textbox/>
-    </f:entry>
+  <f:entry title="Name" field="name">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="Installation" description="How to install DFCli">
+    <f:checkbox title="Install automatically from Github releases" 
+                field="installFromGithub" 
+                checked="${instance.installFromGithub}" />
+  </f:entry>
+
+  <f:entry title="DFCli Path" field="home">
+    <f:textbox />
+    <f:description>
+      Path to dfcli executable. Required if not installing from Github.
+    </f:description>
+  </f:entry>
 </j:jelly>

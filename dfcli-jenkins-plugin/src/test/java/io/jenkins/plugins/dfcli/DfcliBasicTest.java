@@ -12,7 +12,7 @@ public class DfcliBasicTest {
 
     @Test
     public void testBasicConfiguration() {
-        // Basic test to ensure plugin loads
+        // Stub
         assertTrue(true);
     }
 }
