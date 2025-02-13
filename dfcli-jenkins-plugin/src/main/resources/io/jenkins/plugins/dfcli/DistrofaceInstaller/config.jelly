@@ -1,0 +1,18 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="${%Server ID}" field="serverId" help="/plugin/dfcli/help/DistrofaceInstaller/help-serverId.html">
+        <select name="serverId">
+            <j:forEach var="server" items="${descriptor.serverIds}">
+                <f:option value="${server.serverId}" selected="${server.serverId==instance.serverId}">${server.serverId}</f:option>
+            </j:forEach>
+        </select>
+    </f:entry>
+    <f:entry title="${%Remote DFCli CLI repository}" field="repository"
+             help="/plugin/dfcli/help/DistrofaceInstaller/help-repository.html">
+        <f:textbox/>
+    </f:entry>
+    <f:entry title="${%Version}" field="version" description="(Leave empty to install the latest version)"
+             help="/plugin/dfcli/help/DistrofaceInstaller/help-version.html">
+        <f:textbox/>
+    </f:entry>
+</j:jelly>

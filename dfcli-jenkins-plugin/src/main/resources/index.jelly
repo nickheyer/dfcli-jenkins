@@ -1,0 +1,9 @@
+<?jelly escape-by-default='true'?>
+<div>
+    The Jenkins DFCli Plugin allows for easy integration between Jenkins and the DFCli Platform.
+    This integration allows your build jobs to deploy artifacts and resolve dependencies to and from Distroface, and
+    then have them linked to the build job that created them. It also allows you to scan your artifacts and builds with
+    DFCli Xray and distribute your software package to remote locations using DFCli Distribution.
+    This is all achieved by the plugin by wrapping DFCli CLI. Any DFCli CLI command can be executed from within your
+    Jenkins Pipeline job using the DFCli Plugin.
+</div>
