@@ -1,0 +1,42 @@
+import java.net.URLEncoder
+
+def buildNumber = env.BUILD_NUMBER as int
+def urlEncode = { e -> URLEncoder.encode(e, "UTF-8") }
+
+pipeline {
+  agent none
+  parameters {
+    // Branches
+    string name: 'repoName', defaultValue: 'ci-cache-pub', trim: true, description: 'Some repo name'
+    string name: 'branchName', defaultValue: 'TEST_BRANCH_1', trim: true, description: 'Some branch name'
+    string name: 'versionName', defaultValue: 'v1.0.1-Alpha', trim: true, description: 'Some version name'
+  }
+  stages {
+    stage('Build Stuff') {
+      agent any
+      tools {
+          dfcli 'dfcli'
+      }
+      steps {
+        timeout(time: 2, unit: 'HOURS', activity: true) {
+          script {
+            sh 'rm -rf ./*'
+            def packageName = "testFile.txt"
+
+            df 'version'
+            sh "echo 'this is a test file' > ${packageName}"
+
+            def uploadCmd = "artifact upload ${params.repoName} ${packageName}"
+            df command: uploadCmd, version: "${params.versionName}", properties: [ "BRANCH_NAME": "${params.branchName}" ]
+            
+            echo "ARTIFACT UPLOAD SUCCEEDED"
+
+            def result = df command: "artifact search -r ${params.repoName}", properties: [ "BRANCH_NAME": "${params.branchName}" ]
+            println(result)
+          }
+        }
+      }
+    }
+  }
+}
+

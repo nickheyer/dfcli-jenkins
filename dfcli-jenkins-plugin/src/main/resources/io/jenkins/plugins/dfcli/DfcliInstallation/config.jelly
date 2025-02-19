@@ -1,19 +1,34 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form"
+         xmlns:st="jelly:stapler">
+
   <f:entry title="Name" field="name">
-    <f:textbox />
-  </f:entry>
-  
-  <f:entry title="Installation" description="How to install DFCli">
-    <f:checkbox title="Install automatically from Github releases" 
-                field="installFromGithub" 
-                checked="${instance.installFromGithub}" />
+    <f:textbox/>
   </f:entry>
 
-  <f:entry title="DFCli Path" field="home">
-    <f:textbox />
+  <f:entry title="Server URL" field="serverUrl">
+    <f:textbox/>
+  </f:entry>
+
+  <f:entry title="Username" field="username">
+    <f:textbox/>
+  </f:entry>
+
+  <f:entry title="Password" field="password">
+    <f:password/>
+  </f:entry>
+
+  <f:entry title="Access Token" field="accessToken">
+    <f:password/>
+  </f:entry>
+
+  <f:entry title="Installation Directory" field="home">
+    <f:textbox/>
     <f:description>
-      Path to dfcli executable. Required if not installing from Github.
+      If left blank, dfcli is auto-downloaded from GitHub releases.
+      If set, it must point to an existing dfcli installation on this node.
     </f:description>
   </f:entry>
+
 </j:jelly>
