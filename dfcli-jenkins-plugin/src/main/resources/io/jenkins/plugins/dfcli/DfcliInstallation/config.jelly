@@ -1,34 +1,14 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form"
-         xmlns:st="jelly:stapler">
-
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <f:entry title="Name" field="name">
-    <f:textbox/>
-  </f:entry>
-
-  <f:entry title="Server URL" field="serverUrl">
-    <f:textbox/>
-  </f:entry>
-
-  <f:entry title="Username" field="username">
-    <f:textbox/>
-  </f:entry>
-
-  <f:entry title="Password" field="password">
-    <f:password/>
-  </f:entry>
-
-  <f:entry title="Access Token" field="accessToken">
-    <f:password/>
+    <f:textbox />
   </f:entry>
 
   <f:entry title="Installation Directory" field="home">
-    <f:textbox/>
+    <f:textbox />
     <f:description>
       If left blank, dfcli is auto-downloaded from GitHub releases.
       If set, it must point to an existing dfcli installation on this node.
     </f:description>
   </f:entry>
-
 </j:jelly>
