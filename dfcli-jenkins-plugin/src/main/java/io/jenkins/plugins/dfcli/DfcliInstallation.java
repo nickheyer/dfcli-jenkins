@@ -21,8 +21,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.jenkinsci.Symbol;
 
-public class DfCliInstallation extends ToolInstallation
-        implements NodeSpecific<DfCliInstallation>, EnvironmentSpecific<DfCliInstallation>, Serializable {
+public class DfCliInstallation extends ToolInstallation implements NodeSpecific<DfCliInstallation>, EnvironmentSpecific<DfCliInstallation> {
 
     private static final long serialVersionUID = 1L;
     private static final Object installLock = new Object();

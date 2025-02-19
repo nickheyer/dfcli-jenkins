@@ -21,6 +21,7 @@ import jenkins.model.Jenkins;
 import java.io.File;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import hudson.util.Secret;
 
 public class DfStep extends Step implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -127,11 +128,47 @@ public class DfStep extends Step implements Serializable {
             }
             DfCliInstallation tool = installations[0].forNode(node, listener).forEnvironment(env);
 
+            DfCliConfig config = DfCliConfig.get();
+            if (config == null) {
+                throw new IOException("DFCli global config not found");
+            }
+
             // BUILD CMD
             ArgumentListBuilder cmd = new ArgumentListBuilder();
+
+            // DO LOGIN BEFORE EACH CMD, UNFORTUNATELY A DRAWBACK OF JENKINS BEING STUPID ABOUT DOCKER, GOD I DISLIKE JENKINS
+            ArgumentListBuilder loginCmd = new ArgumentListBuilder();
+            loginCmd.add("dfcli");
+            loginCmd.add("login");
+
+            String serverUrl = config.getServerUrl();
+            String username = config.getUsername();
+            Secret password = config.getPassword();
+            Secret token = config.getToken();
+
+            loginCmd.add("--server", serverUrl);
+    
+            if (username != null && !username.isEmpty() && password != null) {
+                loginCmd.add("--username", username);
+                loginCmd.add("--password", Secret.toString(password));
+            } else if (token != null) {
+                loginCmd.add("--token", Secret.toString(token));
+            }
+            
+            int code = launcher.launch()
+                    .cmds(loginCmd)
+                    .pwd(workspace)
+                    .quiet(true)
+                    .join();
+    
+            if (code != 0) {
+                throw new IOException("DFCli login failed with server/user/exit-code " + serverUrl + " | " + username + " | " + code);
+            }
+
             // HANDLE DOCKER VS REGULAR AGENTS
             boolean isDockerAgent = isDockerAgent(launcher);
             if (isDockerAgent) {
+
                 // FOR DOCKER, JUST USE THE BINARY NAME
                 cmd.add("dfcli");
             } else {
@@ -193,7 +230,7 @@ public class DfStep extends Step implements Serializable {
             }
 
             if (exitCode != 0) {
-                throw new IOException("dfcli command failed with exit code " + exitCode);
+                throw new IOException("DFCli cmd failed with server/user/exit-code " + serverUrl + " | " + username + " | " + exitCode);
             }
 
             return outStr;
