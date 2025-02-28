@@ -56,7 +56,7 @@ public class DfCliInstallation extends ToolInstallation implements NodeSpecific<
         }
 
         // AUTO INSTALL TO DEFAULT LOCATION
-        FilePath installDir = rootPath.child("tools").child("dfcli").child(getName());
+        FilePath installDir = rootPath.child("tools");
         synchronized (installLock) {
             if (!installDir.exists()) {
                 installDir.mkdirs();
@@ -93,7 +93,7 @@ public class DfCliInstallation extends ToolInstallation implements NodeSpecific<
             throw new IOException("Node root path is null, cannot do dfcli login");
         }
         
-        FilePath dfcliDir = nodeRoot.child("tools").child("dfcli").child(getName());
+        FilePath dfcliDir = nodeRoot.child("tools");
         Launcher launcher = node.createLauncher(log);
 
         ArgumentListBuilder loginCmd = new ArgumentListBuilder();

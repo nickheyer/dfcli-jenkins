@@ -116,8 +116,8 @@ public class DfStep extends Step implements Serializable {
                 }
                 return key;
             }
+
             if (command == null || command.trim().isEmpty()) {
-                listener.getLogger().println("No dfcli command specified.");
                 return "";
             }
             DfCliInstallation[] installations = Jenkins.get()
@@ -127,7 +127,6 @@ public class DfStep extends Step implements Serializable {
                 throw new IOException("No DfCliInstallation configured in Jenkins global tools.");
             }
             DfCliInstallation tool = installations[0].forNode(node, listener).forEnvironment(env);
-
             DfCliConfig config = DfCliConfig.get();
             if (config == null) {
                 throw new IOException("DFCli global config not found");
@@ -136,51 +135,47 @@ public class DfStep extends Step implements Serializable {
             // BUILD CMD
             ArgumentListBuilder cmd = new ArgumentListBuilder();
 
-            // DO LOGIN BEFORE EACH CMD, UNFORTUNATELY A DRAWBACK OF JENKINS BEING STUPID ABOUT DOCKER, GOD I DISLIKE JENKINS
-            ArgumentListBuilder loginCmd = new ArgumentListBuilder();
-            loginCmd.add("dfcli");
-            loginCmd.add("login");
-
-            String serverUrl = config.getServerUrl();
-            String username = config.getUsername();
-            Secret password = config.getPassword();
-            Secret token = config.getToken();
-
-            loginCmd.add("--server", serverUrl);
-    
-            if (username != null && !username.isEmpty() && password != null) {
-                loginCmd.add("--username", username);
-                loginCmd.add("--password", Secret.toString(password));
-            } else if (token != null) {
-                loginCmd.add("--token", Secret.toString(token));
-            }
-            
-            int code = launcher.launch()
-                    .cmds(loginCmd)
-                    .pwd(workspace)
-                    .quiet(true)
-                    .join();
-    
-            if (code != 0) {
-                throw new IOException("DFCli login failed with server/user/exit-code " + serverUrl + " | " + username + " | " + code);
-            }
-
             // HANDLE DOCKER VS REGULAR AGENTS
             boolean isDockerAgent = isDockerAgent(launcher);
             if (isDockerAgent) {
-
-                // FOR DOCKER, JUST USE THE BINARY NAME
+                // FOR DOCKER, JUST USE THE BINARY NAME + LOGIN AGAIN BEFORE CMD
                 cmd.add("dfcli");
+
+                ArgumentListBuilder loginCmd = new ArgumentListBuilder();
+                loginCmd.add("dfcli");
+                loginCmd.add("login");
+                loginCmd.add("--server", config.getServerUrl());
+
+                String username = config.getUsername();
+                String password = config.getPassword();
+        
+                if (username != null && !username.isEmpty() && password != null) {
+                    loginCmd.add("--username", username);
+                    loginCmd.add("--password", Secret.toString(password));
+                } else if (token != null) {
+                    loginCmd.add("--token", Secret.toString(token));
+                }
+                
+                int code = launcher.launch()
+                        .cmds(loginCmd)
+                        .pwd(workspace)
+                        .quiet(true)
+                        .join();
+        
+                if (code != 0) {
+                    throw new IOException("DFCli login failed with exit code " + code);
+                }
             } else {
               String exePath = launcher.isUnix()
-                      ? tool.getHome() + "/dfcli"
-                      : tool.getHome() + "\\dfcli.exe";
+                      ? "dfcli"
+                      : "dfcli.exe";
               cmd.add(exePath);
             }
 
             for (String arg : command.split("\\s+")) {
                 cmd.add(arg);
             }
+
             if (cacheKey != null && !cacheKey.isEmpty()) {
                 StringBuilder keyBuf = new StringBuilder(cacheKey);
                 if (properties != null && !properties.isEmpty()) {
@@ -199,16 +194,10 @@ public class DfStep extends Step implements Serializable {
                 }
             }
 
-            // UPDATE PATH FOR DOCKER AGENTS
-            if (isDockerAgent) {
-              String path = env.get("PATH", "");
-              path = tool.getHome() + File.pathSeparator + path;
-              env.put("PATH", path);
-              listener.getLogger().println("Updated PATH to include dfcli directory: " + path);
-            }
             ByteArrayOutputStream stdout = new ByteArrayOutputStream();
             ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
+            listener.getLogger().println("DFCli running: " + cmd.toString());
             int exitCode = launcher.launch()
                 .cmds(cmd)
                 .envs(env)
@@ -225,6 +214,7 @@ public class DfStep extends Step implements Serializable {
                     listener.getLogger().println(line);
                 }
             }
+            
             if (!errStr.isEmpty()) {
                 listener.error(errStr);
             }
