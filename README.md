@@ -1,6 +1,6 @@
 # Jenkins DFCli Plugin
 
-Like DFCli, but made in the last 20 years and without critical features hidden behind a stupid paywall.
+Like Jfrog, but made in the last 20 years and without critical features hidden behind a stupid paywall.
 
 ## LICENSE
 
