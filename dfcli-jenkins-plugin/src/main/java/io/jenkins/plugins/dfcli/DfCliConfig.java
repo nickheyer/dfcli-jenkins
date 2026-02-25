@@ -31,7 +31,7 @@ public class DfCliConfig extends GlobalConfiguration {
         return username;
     }
 
-    @DataBoundSetter 
+    @DataBoundSetter
     public void setUsername(String username) {
         this.username = username;
         save();

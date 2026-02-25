@@ -7,13 +7,12 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.zip.ZipInputStream;
+import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import jenkins.MasterToSlaveFileCallable;
 
 public class GithubInstaller {
-    private static final String RELEASE_URL =
-        "https://github.com/nickheyer/distroface/releases/latest/download/";
+    private static final String RELEASE_URL = "https://github.com/nickheyer/distroface/releases/latest/download/";
 
     public static synchronized void installLatest(FilePath toolDir, TaskListener log)
             throws IOException, InterruptedException {
@@ -28,8 +27,7 @@ public class GithubInstaller {
         if ("x86_64".equals(arch)) arch = "amd64";
         if ("aarch64".equals(arch)) arch = "arm64";
 
-        String platform = (os.contains("windows") ? "windows" :
-                           os.contains("mac")     ? "darwin"  : "linux") + "-" + arch;
+        String platform = (os.contains("windows") ? "windows" : os.contains("mac") ? "darwin" : "linux") + "-" + arch;
         String ext = os.contains("windows") ? ".zip" : ".tar.gz";
         String archiveName = "dfcli-" + platform + ext;
         String url = RELEASE_URL + archiveName;
@@ -68,28 +66,31 @@ public class GithubInstaller {
     private static void extractZip(FilePath zip, FilePath dest) throws IOException, InterruptedException {
         zip.act(new ExtractZipArchive(dest));
     }
+
     private static void extractTarGz(FilePath tgz, FilePath dest) throws IOException, InterruptedException {
         tgz.act(new ExtractTarGzArchive(dest));
     }
 
     private static class ExtractTarGzArchive extends MasterToSlaveFileCallable<Void> {
         private final FilePath destDir;
+
         ExtractTarGzArchive(FilePath destDir) {
             this.destDir = destDir;
         }
+
         @Override
         public Void invoke(File f, VirtualChannel channel) throws IOException {
             try (InputStream fi = Files.newInputStream(f.toPath());
-                 GzipCompressorInputStream gzi = new GzipCompressorInputStream(fi);
-                 TarArchiveInputStream tis = new TarArchiveInputStream(gzi)) {
-                var entry = tis.getNextTarEntry();
+                    GzipCompressorInputStream gzi = new GzipCompressorInputStream(fi);
+                    TarArchiveInputStream tis = new TarArchiveInputStream(gzi)) {
+                var entry = tis.getNextEntry();
                 while (entry != null) {
                     if (!entry.isDirectory() && entry.getName().endsWith("dfcli")) {
                         Path target = Paths.get(destDir.getRemote()).resolve("dfcli");
                         Files.copy(tis, target, StandardCopyOption.REPLACE_EXISTING);
                         break;
                     }
-                    entry = tis.getNextTarEntry();
+                    entry = tis.getNextEntry();
                 }
             }
             return null;
@@ -98,9 +99,11 @@ public class GithubInstaller {
 
     private static class ExtractZipArchive extends MasterToSlaveFileCallable<Void> {
         private final FilePath destDir;
+
         ExtractZipArchive(FilePath destDir) {
             this.destDir = destDir;
         }
+
         @Override
         public Void invoke(File f, VirtualChannel channel) throws IOException {
             try (ZipInputStream zis = new ZipInputStream(new FileInputStream(f))) {

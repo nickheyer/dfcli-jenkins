@@ -7,28 +7,27 @@ import hudson.Launcher;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
+import hudson.util.Secret;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
-import jenkins.model.Jenkins;
-import java.io.File;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import hudson.util.Secret;
 
 public class DfStep extends Step implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String command;
     private String version;
-    private Map<String,String> properties;
+    private Map<String, String> properties;
     private String cacheKey;
     private boolean createCacheKey;
 
@@ -63,7 +62,7 @@ public class DfStep extends Step implements Serializable {
     }
 
     @DataBoundSetter
-    public void setProperties(Map<String,String> properties) {
+    public void setProperties(Map<String, String> properties) {
         this.properties = properties;
     }
 
@@ -121,12 +120,16 @@ public class DfStep extends Step implements Serializable {
                 return "";
             }
             DfCliInstallation[] installations = Jenkins.get()
-                .getDescriptorByType(DfCliInstallation.DescriptorImpl.class)
-                .getInstallations();
+                    .getDescriptorByType(DfCliInstallation.DescriptorImpl.class)
+                    .getInstallations();
             if (installations == null || installations.length == 0) {
                 throw new IOException("No DfCliInstallation configured in Jenkins global tools.");
             }
-            DfCliInstallation tool = installations[0].forNode(node, listener).forEnvironment(env);
+
+            installations[0]
+              .forNode(node, listener)
+              .forEnvironment(env);
+
             DfCliConfig config = DfCliConfig.get();
             if (config == null) {
                 throw new IOException("DFCli global config not found");
@@ -147,29 +150,28 @@ public class DfStep extends Step implements Serializable {
                 loginCmd.add("--server", config.getServerUrl());
 
                 String username = config.getUsername();
-                String password = config.getPassword();
-        
+                Secret password = config.getPassword();
+                Secret token = config.getToken();
+
                 if (username != null && !username.isEmpty() && password != null) {
                     loginCmd.add("--username", username);
                     loginCmd.add("--password", Secret.toString(password));
                 } else if (token != null) {
                     loginCmd.add("--token", Secret.toString(token));
                 }
-                
+
                 int code = launcher.launch()
                         .cmds(loginCmd)
                         .pwd(workspace)
-                        .quiet(true)
+                        .quiet(false)
                         .join();
-        
+
                 if (code != 0) {
                     throw new IOException("DFCli login failed with exit code " + code);
                 }
             } else {
-              String exePath = launcher.isUnix()
-                      ? "dfcli"
-                      : "dfcli.exe";
-              cmd.add(exePath);
+                String exePath = launcher.isUnix() ? "dfcli" : "dfcli.exe";
+                cmd.add(exePath);
             }
 
             for (String arg : command.split("\\s+")) {
@@ -181,7 +183,8 @@ public class DfStep extends Step implements Serializable {
                 if (properties != null && !properties.isEmpty()) {
                     keyBuf.append(" --property ");
                     StringBuilder propsBuf = new StringBuilder();
-                    properties.forEach((k,v) -> propsBuf.append(k).append("=").append(v).append(","));
+                    properties.forEach(
+                            (k, v) -> propsBuf.append(k).append("=").append(v).append(","));
 
                     propsBuf.setLength(propsBuf.length() - 1);
                     keyBuf.append(propsBuf);
@@ -199,12 +202,12 @@ public class DfStep extends Step implements Serializable {
 
             listener.getLogger().println("DFCli running: " + cmd.toString());
             int exitCode = launcher.launch()
-                .cmds(cmd)
-                .envs(env)
-                .pwd(workspace)
-                .stdout(stdout)
-                .stderr(stderr)
-                .join();
+                    .cmds(cmd)
+                    .envs(env)
+                    .pwd(workspace)
+                    .stdout(stdout)
+                    .stderr(stderr)
+                    .join();
 
             String outStr = stdout.toString("UTF-8").trim();
             String errStr = stderr.toString("UTF-8").trim();
@@ -214,20 +217,21 @@ public class DfStep extends Step implements Serializable {
                     listener.getLogger().println(line);
                 }
             }
-            
+
             if (!errStr.isEmpty()) {
                 listener.error(errStr);
             }
 
             if (exitCode != 0) {
-                throw new IOException("DFCli cmd failed with server/user/exit-code " + serverUrl + " | " + username + " | " + exitCode);
+                throw new IOException("DFCli cmd failed with server/user/exit-code " + config.getServerUrl() + " | " + config.getUsername()
+                        + " | " + exitCode);
             }
 
             return outStr;
         }
 
         private boolean isDockerAgent(Launcher launcher) {
-          return launcher.toString().toLowerCase().contains("docker");
+            return launcher.toString().toLowerCase().contains("docker");
         }
 
         private String generateCacheKey() {
@@ -241,7 +245,8 @@ public class DfStep extends Step implements Serializable {
             if (properties != null && !properties.isEmpty()) {
                 key.append(" --property ");
                 StringBuilder props = new StringBuilder();
-                properties.forEach((k,v) -> props.append(k).append("=").append(v).append(","));
+                properties.forEach(
+                        (k, v) -> props.append(k).append("=").append(v).append(","));
                 props.setLength(props.length() - 1);
                 key.append(props);
             }

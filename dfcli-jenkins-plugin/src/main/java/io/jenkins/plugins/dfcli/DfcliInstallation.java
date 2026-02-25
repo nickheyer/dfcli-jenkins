@@ -14,14 +14,12 @@ import hudson.tools.ToolProperty;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.List;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-public class DfCliInstallation extends ToolInstallation implements NodeSpecific<DfCliInstallation>, EnvironmentSpecific<DfCliInstallation> {
+public class DfCliInstallation extends ToolInstallation
+        implements NodeSpecific<DfCliInstallation>, EnvironmentSpecific<DfCliInstallation> {
 
     private static final long serialVersionUID = 1L;
     private static final Object installLock = new Object();
@@ -69,7 +67,8 @@ public class DfCliInstallation extends ToolInstallation implements NodeSpecific<
 
             doLoginIfNeeded(node, log, installDir.getRemote(), config);
 
-            return new DfCliInstallation(getName(), installDir.getRemote(), getProperties().toList());
+            return new DfCliInstallation(
+                    getName(), installDir.getRemote(), getProperties().toList());
         }
     }
 
@@ -92,7 +91,7 @@ public class DfCliInstallation extends ToolInstallation implements NodeSpecific<
         if (nodeRoot == null) {
             throw new IOException("Node root path is null, cannot do dfcli login");
         }
-        
+
         FilePath dfcliDir = nodeRoot.child("tools");
         Launcher launcher = node.createLauncher(log);
 
@@ -111,12 +110,8 @@ public class DfCliInstallation extends ToolInstallation implements NodeSpecific<
         } else if (token != null) {
             loginCmd.add("--token", Secret.toString(token));
         }
-        
-        int code = launcher.launch()
-                .cmds(loginCmd)
-                .pwd(dfcliDir)
-                .quiet(true)
-                .join();
+
+        int code = launcher.launch().cmds(loginCmd).pwd(dfcliDir).quiet(true).join();
 
         if (code != 0) {
             throw new IOException("DFCli login failed with exit code " + code);
